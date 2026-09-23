@@ -1,0 +1,20 @@
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (jika ada)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+Thumbs.db
+*.log
+
+# Build & Deploy
+dist/
+build/

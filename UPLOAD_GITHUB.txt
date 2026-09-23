@@ -1,0 +1,114 @@
+╔════════════════════════════════════════════════════════════════════╗
+║          INSTRUKSI UPLOAD KE GITHUB - LANGKAH DEMI LANGKAH        ║
+╚════════════════════════════════════════════════════════════════════╝
+
+STATUS: ✅ Git repository sudah diinisialisasi di folder lokal
+
+LANGKAH 1: BUAT REPOSITORY BARU DI GITHUB
+═══════════════════════════════════════════════════════════════════
+
+1. Buka https://github.com/login
+2. Login dengan akun GitHub Anda
+3. Klik tombol "+" di kanan atas
+4. Pilih "New repository"
+5. ISI DATA:
+   - Repository name: CO2
+   - Description: Atlas Karbon CO2 Calculator - Aplikasi web untuk hitung emisi CO2 pohon
+   - Public: ✓ Pilih (agar bisa diakses publik)
+   - Initialize this repository with: JANGAN pilih apapun
+   - Add .gitignore: None
+   - Add a license: MIT License (optional)
+6. Klik "Create repository"
+
+LANGKAH 2: COPY URL REPOSITORY
+═══════════════════════════════════════════════════════════════════
+
+Setelah membuat repository, GitHub akan tampilkan halaman baru.
+COPY URL yang terlihat (format: https://github.com/USERNAME/CO2.git)
+
+Contoh: https://github.com/ahmad-aziz/CO2.git
+
+LANGKAH 3: PUSH KE GITHUB (Jalankan di Terminal/PowerShell)
+═══════════════════════════════════════════════════════════════════
+
+Copy-paste commands ini ke Terminal/PowerShell (replace URL dengan punya Anda):
+
+---START COPY---
+
+cd "d:\xampp8\htdocs\CO2"
+git remote add origin https://github.com/USERNAME/CO2.git
+git branch -M main
+git push -u origin main
+
+---END COPY---
+
+GANTI "USERNAME" DENGAN USERNAME GITHUB ANDA!
+
+LANGKAH 4: MASUKKAN GITHUB CREDENTIALS
+═══════════════════════════════════════════════════════════════════
+
+Saat push, GitHub akan minta authentikasi:
+
+Option 1: HTTPS dengan Personal Access Token (RECOMMENDED)
+- Username: YOUR_GITHUB_USERNAME
+- Password: (Gunakan Personal Access Token, bukan password!)
+
+Cara buat Personal Access Token:
+1. Buka https://github.com/settings/tokens
+2. Klik "Generate new token"
+3. Pilih "Generate new token (classic)"
+4. Give your token a name: "CO2 Upload"
+5. Select scopes: 
+   - repo (Full control of private repositories)
+6. Klik "Generate token"
+7. COPY token (hanya muncul sekali!)
+8. Paste sebagai password saat git push
+
+Option 2: SSH Key (ADVANCED)
+- Jika sudah setup SSH key, gunakan URL: git@github.com:USERNAME/CO2.git
+
+LANGKAH 5: VERIFIKASI
+═══════════════════════════════════════════════════════════════════
+
+Setelah push berhasil:
+1. Buka https://github.com/USERNAME/CO2
+2. ✅ Lihat semua files ter-upload
+3. ✅ README.md muncul sebagai preview
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+Error: "fatal: could not resolve host"
+→ Check internet connection
+
+Error: "403 Forbidden"
+→ Personal Access Token salah/expired
+→ Buat token baru di https://github.com/settings/tokens
+
+Error: "repository not found"
+→ URL salah atau repository belum dibuat
+→ Cek di https://github.com/USERNAME/CO2
+
+Error: "Permission denied (publickey)"
+→ SSH key belum setup
+→ Gunakan HTTPS option dengan Personal Access Token
+
+NEXT STEP: ENABLE GITHUB PAGES (OPTIONAL)
+═══════════════════════════════════════════════════════════════════
+
+Untuk live site (https://USERNAME.github.io/CO2/):
+
+1. Buka https://github.com/USERNAME/CO2
+2. Klik "Settings" tab
+3. Di sidebar, klik "Pages"
+4. Branch: Pilih "main"
+5. Folder: Pilih "/ (root)"
+6. Klik "Save"
+7. Tunggu 1-2 menit
+8. Live di: https://USERNAME.github.io/CO2/
+
+═══════════════════════════════════════════════════════════════════
+
+Jika sudah berhasil, beritahu saya hasilnya! 🎉
+
+Butuh bantuan? Saya siap membantu! 👍

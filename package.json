@@ -1,0 +1,32 @@
+{
+  "name": "co2-calculator",
+  "version": "1.0.0",
+  "description": "Aplikasi web modern untuk menghitung emisi CO₂ yang diserap oleh pohon, terinspirasi dari program Atlas Karbon Kelas X1 SMAN 4 Mataram",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -o",
+    "dev": "npx http-server -p 3000 -c-1",
+    "build": "echo 'Static site, no build needed'",
+    "deploy": "echo 'Deploy to GitHub Pages or your hosting service'"
+  },
+  "keywords": [
+    "co2",
+    "calculator",
+    "carbon",
+    "environment",
+    "trees",
+    "dendrometri",
+    "emisi",
+    "pohon"
+  ],
+  "author": "Kiro AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/CO2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/CO2/issues"
+  },
+  "homepage": "https://github.com/yourusername/CO2#readme"
+}
