@@ -253,11 +253,18 @@ class HistoryManager {
                 quantity: quantity,
                 latitude: latitude || '-',
                 longitude: longitude || '-',
-                imageData: null, // Tidak simpan foto ke localStorage (terlalu besar)
+                imageData: imageData || null,
                 timestamp: new Date().toLocaleString('id-ID')
             };
             this.history.unshift(record);
-            this.saveHistory();
+            try {
+                this.saveHistory();
+            } catch(storageError) {
+                // Jika localStorage penuh, simpan tanpa foto
+                console.warn('⚠️ localStorage penuh, simpan tanpa foto');
+                record.imageData = null;
+                this.saveHistory();
+            }
             console.log('✅ Record added:', record.groupName);
             return record;
         } catch(e) {
@@ -778,17 +785,37 @@ function handleImageUpload(event) {
         return;
     }
 
-    // Baca file sebagai base64
+    // Baca file dan kompres via canvas agar muat di localStorage
     const reader = new FileReader();
     reader.onload = function(e) {
-        const imageData = e.target.result;
-        window.currentImageData = imageData;
-        
-        // Tampilkan preview
-        const previewDiv = document.getElementById('image-preview');
-        const previewImg = document.getElementById('preview-img');
-        previewImg.src = imageData;
-        previewDiv.style.display = 'block';
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > MAX_WIDTH) {
+                height = Math.round(height * MAX_WIDTH / width);
+                width = MAX_WIDTH;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Kompres ke JPEG quality 0.6
+            const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+            window.currentImageData = compressedData;
+
+            // Tampilkan preview
+            const previewDiv = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            previewImg.src = compressedData;
+            previewDiv.style.display = 'block';
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
