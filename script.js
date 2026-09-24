@@ -91,11 +91,104 @@ const treesData = [
     }
 ];
 
+// ===== Default Kelompok Data (8 Kelompok) =====
+const defaultKelompokData = [
+    {
+        groupName: 'Kelompok 1',
+        treeName: 'Manggga',
+        lingkar: 95,
+        diameter: 30.3,
+        co2PerTree: 66.55,
+        totalCO2: 66.55,
+        quantity: 1,
+        latitude: -8.5832,
+        longitude: 116.1048
+    },
+    {
+        groupName: 'Kelompok 2',
+        treeName: 'Mahoni',
+        lingkar: 120,
+        diameter: 38.2,
+        co2PerTree: 84.04,
+        totalCO2: 84.04,
+        quantity: 1,
+        latitude: -8.5835,
+        longitude: 116.1052
+    },
+    {
+        groupName: 'Kelompok 3',
+        treeName: 'Sengon',
+        lingkar: 150,
+        diameter: 47.8,
+        co2PerTree: 105.10,
+        totalCO2: 105.10,
+        quantity: 1,
+        latitude: -8.5828,
+        longitude: 116.1055
+    },
+    {
+        groupName: 'Kelompok 4',
+        treeName: 'Pucuk Merah',
+        lingkar: 65,
+        diameter: 20.7,
+        co2PerTree: 45.54,
+        totalCO2: 45.54,
+        quantity: 1,
+        latitude: -8.5840,
+        longitude: 116.1045
+    },
+    {
+        groupName: 'Kelompok 5',
+        treeName: 'Sawo',
+        lingkar: 85,
+        diameter: 27.1,
+        co2PerTree: 59.55,
+        totalCO2: 59.55,
+        quantity: 1,
+        latitude: -8.5838,
+        longitude: 116.1060
+    },
+    {
+        groupName: 'Kelompok 6',
+        treeName: 'Palem',
+        lingkar: 70,
+        diameter: 22.3,
+        co2PerTree: 49.04,
+        totalCO2: 49.04,
+        quantity: 1,
+        latitude: -8.5825,
+        longitude: 116.1042
+    },
+    {
+        groupName: 'Kelompok 7',
+        treeName: 'Manggis',
+        lingkar: 80,
+        diameter: 25.5,
+        co2PerTree: 56.05,
+        totalCO2: 56.05,
+        quantity: 1,
+        latitude: -8.5830,
+        longitude: 116.1058
+    },
+    {
+        groupName: 'Kelompok 8',
+        treeName: 'Cemara',
+        lingkar: 110,
+        diameter: 35.0,
+        co2PerTree: 77.07,
+        totalCO2: 77.07,
+        quantity: 1,
+        latitude: -8.5842,
+        longitude: 116.1050
+    }
+];
+
 // ===== History Management =====
 class HistoryManager {
     constructor() {
         this.storageKey = 'co2_history';
         this.loadHistory();
+        this.seedDefaultKelompok();
     }
 
     loadHistory() {
@@ -105,6 +198,46 @@ class HistoryManager {
 
     saveHistory() {
         localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+    }
+
+    // Cek dan tambahkan kelompok yang belum ada di riwayat
+    seedDefaultKelompok() {
+        const existingGroups = this.history.map(r => r.groupName.toLowerCase().trim());
+        let added = false;
+
+        defaultKelompokData.forEach((kelompok, index) => {
+            const groupKey = kelompok.groupName.toLowerCase().trim();
+            if (!existingGroups.includes(groupKey)) {
+                const record = {
+                    id: Date.now() - (8 - index) * 100000, // unique ID, older timestamp
+                    groupName: kelompok.groupName,
+                    treeName: kelompok.treeName,
+                    lingkar: kelompok.lingkar.toFixed(1),
+                    diameter: kelompok.diameter.toFixed(1),
+                    co2PerTree: kelompok.co2PerTree.toFixed(2),
+                    totalCO2: kelompok.totalCO2.toFixed(2),
+                    quantity: kelompok.quantity,
+                    latitude: kelompok.latitude,
+                    longitude: kelompok.longitude,
+                    imageData: null,
+                    timestamp: new Date().toLocaleString('id-ID')
+                };
+                this.history.push(record);
+                added = true;
+                console.log('✅ Auto-seed:', kelompok.groupName, '-', kelompok.treeName);
+            }
+        });
+
+        if (added) {
+            // Urutkan: Kelompok 1, 2, 3, ... 8 (ascending)
+            this.history.sort((a, b) => {
+                const numA = parseInt(a.groupName.replace(/\D/g, '')) || 999;
+                const numB = parseInt(b.groupName.replace(/\D/g, '')) || 999;
+                return numA - numB;
+            });
+            this.saveHistory();
+            console.log('✅ Seeded missing kelompok data. Total records:', this.history.length);
+        }
     }
 
     addRecord(groupName, treeName, diameter, co2PerTree, totalCO2, quantity, latitude, longitude, imageData) {
