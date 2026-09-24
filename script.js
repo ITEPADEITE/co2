@@ -168,7 +168,8 @@ const defaultKelompokData = [
         totalCO2: 56.05,
         quantity: 1,
         latitude: -8.5830,
-        longitude: 116.1058
+        longitude: 116.1058,
+        imageFile: 'images/kelompok7_manggis.png'
     },
     {
         groupName: 'Kelompok 8',
@@ -179,7 +180,8 @@ const defaultKelompokData = [
         totalCO2: 77.07,
         quantity: 1,
         latitude: -8.5842,
-        longitude: 116.1050
+        longitude: 116.1050,
+        imageFile: 'images/kelompok8_cemara.png'
     }
 ];
 
@@ -219,12 +221,26 @@ class HistoryManager {
                     quantity: kelompok.quantity,
                     latitude: kelompok.latitude,
                     longitude: kelompok.longitude,
-                    imageData: null,
+                    imageData: kelompok.imageFile || null,
                     timestamp: new Date().toLocaleString('id-ID')
                 };
                 this.history.push(record);
                 added = true;
                 console.log('✅ Auto-seed:', kelompok.groupName, '-', kelompok.treeName);
+            }
+        });
+
+        // Patch: tambahkan gambar ke record yang sudah ada tapi belum punya foto
+        this.history.forEach(record => {
+            if (!record.imageData) {
+                const match = defaultKelompokData.find(
+                    k => k.groupName.toLowerCase().trim() === record.groupName.toLowerCase().trim()
+                );
+                if (match && match.imageFile) {
+                    record.imageData = match.imageFile;
+                    added = true;
+                    console.log('🖼️ Patched image for:', record.groupName);
+                }
             }
         });
 
@@ -236,7 +252,7 @@ class HistoryManager {
                 return numA - numB;
             });
             this.saveHistory();
-            console.log('✅ Seeded missing kelompok data. Total records:', this.history.length);
+            console.log('✅ Seeded/patched kelompok data. Total records:', this.history.length);
         }
     }
 
