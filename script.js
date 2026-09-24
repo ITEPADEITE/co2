@@ -108,23 +108,29 @@ class HistoryManager {
     }
 
     addRecord(groupName, treeName, diameter, co2PerTree, totalCO2, quantity, latitude, longitude, imageData) {
-        const record = {
-            id: Date.now(),
-            groupName: groupName || 'Tidak Ada Nama',
-            treeName: treeName,
-            lingkar: (diameter * 3.14).toFixed(1),
-            diameter: diameter.toFixed(1),
-            co2PerTree: co2PerTree.toFixed(2),
-            totalCO2: totalCO2.toFixed(2),
-            quantity: quantity,
-            latitude: latitude || '-',
-            longitude: longitude || '-',
-            imageData: imageData || null,
-            timestamp: new Date().toLocaleString('id-ID')
-        };
-        this.history.unshift(record);
-        this.saveHistory();
-        return record;
+        try {
+            const record = {
+                id: Date.now(),
+                groupName: groupName || 'Tidak Ada Nama',
+                treeName: treeName,
+                lingkar: (diameter * 3.14).toFixed(1),
+                diameter: diameter.toFixed(1),
+                co2PerTree: co2PerTree.toFixed(2),
+                totalCO2: totalCO2.toFixed(2),
+                quantity: quantity,
+                latitude: latitude || '-',
+                longitude: longitude || '-',
+                imageData: null, // Tidak simpan foto ke localStorage (terlalu besar)
+                timestamp: new Date().toLocaleString('id-ID')
+            };
+            this.history.unshift(record);
+            this.saveHistory();
+            console.log('✅ Record added:', record.groupName);
+            return record;
+        } catch(e) {
+            console.error('❌ Error addRecord:', e);
+            alert('Error menyimpan data: ' + e.message);
+        }
     }
 
     getHistory() {
@@ -258,73 +264,84 @@ function createTreeCard(tree) {
 
 // ===== Calculate CO2 =====
 function calculateCO2() {
-    const groupNameInput = document.getElementById('group-name-input');
-    const lingkarInput = document.getElementById('lingkar-input');
-    const quantityInput = document.getElementById('quantity-input');
-    const treeSelectInput = document.getElementById('tree-select');
-    const treeManualInput = document.getElementById('tree-manual-input');
-    const latitudeInput = document.getElementById('latitude-input');
-    const longitudeInput = document.getElementById('longitude-input');
-    const resultDisplay = document.getElementById('result-display');
+    try {
+        const groupNameInput = document.getElementById('group-name-input');
+        const lingkarInput = document.getElementById('lingkar-input');
+        const quantityInput = document.getElementById('quantity-input');
+        const treeSelectInput = document.getElementById('tree-select');
+        const treeManualInput = document.getElementById('tree-manual-input');
+        const latitudeInput = document.getElementById('latitude-input');
+        const longitudeInput = document.getElementById('longitude-input');
+        const resultDisplay = document.getElementById('result-display');
 
-    const groupName = groupNameInput.value;
-    const lingkar = parseFloat(lingkarInput.value);
-    const quantity = parseInt(quantityInput.value) || 1;
-    const selectedTreeId = treeSelectInput.value;
-    const manualTreeName = treeManualInput.value.trim();
-    const latitude = latitudeInput.value ? parseFloat(latitudeInput.value) : null;
-    const longitude = longitudeInput.value ? parseFloat(longitudeInput.value) : null;
-    const imageData = window.currentImageData || null;
+        const groupName = groupNameInput.value;
+        const lingkar = parseFloat(lingkarInput.value);
+        const quantity = parseInt(quantityInput.value) || 1;
+        const selectedTreeId = treeSelectInput.value;
+        const manualTreeName = treeManualInput.value.trim();
+        const latitude = latitudeInput.value ? parseFloat(latitudeInput.value) : null;
+        const longitude = longitudeInput.value ? parseFloat(longitudeInput.value) : null;
+        const imageData = window.currentImageData || null;
 
-    // Validasi input
-    if (!lingkar || lingkar <= 0) {
-        alert('Masukkan lingkar pohon yang valid (> 0 cm)');
-        return;
+        // Validasi input
+        if (!lingkar || lingkar <= 0) {
+            alert('Masukkan lingkar pohon yang valid (> 0 cm)');
+            return;
+        }
+
+        // Get tree name - prioritas: manual input > select dropdown > default
+        let treeName = 'Pohon Custom';
+        if (manualTreeName) {
+            treeName = manualTreeName;
+        } else if (selectedTreeId !== '') {
+            treeName = treesData[selectedTreeId].name;
+        } else {
+            alert('Pilih jenis pohon atau masukkan nama pohon manual');
+            return;
+        }
+
+        // Hitung diameter
+        const diameter = lingkar / DIAMETER_FACTOR;
+
+        // Hitung serapan CO2 per pohon
+        const co2PerTree = diameter * CO2_FACTOR;
+
+        // Total serapan
+        const totalCO2 = co2PerTree * quantity;
+
+        // Konversi ke mobil km
+        const mobilKm = (totalCO2 * 1000 / 0.227).toFixed(0);
+
+        // Update tampilan hasil
+        document.getElementById('diameter-result').textContent = diameter.toFixed(1) + ' cm';
+        document.getElementById('co2-single-result').textContent = co2PerTree.toFixed(2) + ' kg/tahun';
+        document.getElementById('co2-total-result').textContent = totalCO2.toFixed(2) + ' kg CO₂/tahun';
+        document.getElementById('comparison-text').innerHTML = `
+            <strong>Setara dengan menyerap polusi dari ~${mobilKm} km perjalanan mobil bensin per tahun</strong>
+        `;
+
+        // Tambah ke history
+        console.log('Adding record:', groupName, treeName);
+        historyManager.addRecord(groupName, treeName, diameter, co2PerTree, totalCO2, quantity, latitude, longitude, imageData);
+        
+        // Render history
+        console.log('Rendering history...');
+        renderHistory();
+
+        // Clear form & image
+        lingkarInput.value = '';
+        quantityInput.value = '1';
+        removeImage();
+
+        // Tampilkan hasil
+        resultDisplay.style.display = 'block';
+        resultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        console.log('✅ Calculate CO2 completed successfully');
+    } catch(error) {
+        console.error('❌ Error in calculateCO2:', error);
+        alert('Error: ' + error.message);
     }
-
-    // Get tree name - prioritas: manual input > select dropdown > default
-    let treeName = 'Pohon Custom';
-    if (manualTreeName) {
-        treeName = manualTreeName;
-    } else if (selectedTreeId !== '') {
-        treeName = treesData[selectedTreeId].name;
-    } else {
-        alert('Pilih jenis pohon atau masukkan nama pohon manual');
-        return;
-    }
-
-    // Hitung diameter
-    const diameter = lingkar / DIAMETER_FACTOR;
-
-    // Hitung serapan CO2 per pohon
-    const co2PerTree = diameter * CO2_FACTOR;
-
-    // Total serapan
-    const totalCO2 = co2PerTree * quantity;
-
-    // Konversi ke mobil km
-    const mobilKm = (totalCO2 * 1000 / 0.227).toFixed(0);
-
-    // Update tampilan hasil
-    document.getElementById('diameter-result').textContent = diameter.toFixed(1) + ' cm';
-    document.getElementById('co2-single-result').textContent = co2PerTree.toFixed(2) + ' kg/tahun';
-    document.getElementById('co2-total-result').textContent = totalCO2.toFixed(2) + ' kg CO₂/tahun';
-    document.getElementById('comparison-text').innerHTML = `
-        <strong>Setara dengan menyerap polusi dari ~${mobilKm} km perjalanan mobil bensin per tahun</strong>
-    `;
-
-    // Tambah ke history
-    historyManager.addRecord(groupName, treeName, diameter, co2PerTree, totalCO2, quantity, latitude, longitude, imageData);
-    renderHistory();
-
-    // Clear form & image
-    lingkarInput.value = '';
-    quantityInput.value = '1';
-    removeImage();
-
-    // Tampilkan hasil
-    resultDisplay.style.display = 'block';
-    resultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ===== Setup Chart =====
@@ -442,75 +459,87 @@ function formatNumber(num) {
 
 // ===== Render History =====
 function renderHistory() {
-    const historyList = document.getElementById('history-list');
-    const clearBtn = document.getElementById('clear-history-btn');
-    const downloadExcelBtn = document.getElementById('download-excel-btn');
-    const history = historyManager.getHistory();
+    try {
+        const historyList = document.getElementById('history-list');
+        const clearBtn = document.getElementById('clear-history-btn');
+        const downloadExcelBtn = document.getElementById('download-excel-btn');
+        const history = historyManager.getHistory();
 
-    if (history.length === 0) {
-        historyList.innerHTML = '<div class="history-empty"><p><i class="fas fa-inbox"></i> Belum ada data. Mulai hitung CO₂ untuk melihat riwayat!</p></div>';
-        clearBtn.style.display = 'none';
-        downloadExcelBtn.style.display = 'none';
-        return;
-    }
+        console.log('renderHistory: Total records =', history.length);
 
-    clearBtn.style.display = 'block';
-    downloadExcelBtn.style.display = 'block';
-    historyList.innerHTML = '';
-
-    history.forEach((record, index) => {
-        const card = document.createElement('div');
-        card.className = 'history-card';
-        
-        let imageHtml = '';
-        if (record.imageData) {
-            imageHtml = `<div style="margin-top: 10px;"><img src="${record.imageData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid var(--border-color);"></div>`;
+        if (history.length === 0) {
+            historyList.innerHTML = '<div class="history-empty"><p><i class="fas fa-inbox"></i> Belum ada data. Mulai hitung CO₂ untuk melihat riwayat!</p></div>';
+            clearBtn.style.display = 'none';
+            downloadExcelBtn.style.display = 'none';
+            return;
         }
 
-        card.innerHTML = `
-            <div class="history-card-header">
-                <div class="history-card-group">
-                    <div class="history-card-group-name">📊 ${record.groupName}</div>
-                    <div class="history-card-tree">🌳 ${record.treeName}</div>
-                </div>
-                <button class="history-delete-btn" onclick="deleteHistoryRecord(${record.id})" title="Hapus">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="history-card-body">
-                <div class="history-item">
-                    <span class="history-item-label">Lingkar:</span>
-                    <span class="history-item-value">${record.lingkar} cm</span>
-                </div>
-                <div class="history-item">
-                    <span class="history-item-label">Diameter:</span>
-                    <span class="history-item-value">${record.diameter} cm</span>
-                </div>
-                <div class="history-item">
-                    <span class="history-item-label">Jumlah:</span>
-                    <span class="history-item-value">${record.quantity} pohon</span>
-                </div>
-                <div class="history-item">
-                    <span class="history-item-label">CO₂/pohon:</span>
-                    <span class="history-item-value">${record.co2PerTree} kg</span>
-                </div>
-                ${record.latitude !== '-' ? `<div class="history-item">
-                    <span class="history-item-label">📍 Koordinat:</span>
-                    <span class="history-item-value">${record.latitude.toFixed(6)}, ${record.longitude.toFixed(6)}</span>
-                </div>` : ''}
-                <div class="history-co2-total">
-                    <span class="history-co2-value">${record.totalCO2} kg</span>
-                    <span class="history-co2-label">Total CO₂/tahun</span>
-                </div>
-                ${imageHtml}
-                <div class="history-timestamp">
-                    ⏰ ${record.timestamp}
-                </div>
-            </div>
-        `;
+        clearBtn.style.display = 'block';
+        downloadExcelBtn.style.display = 'block';
+        historyList.innerHTML = '';
 
-        historyList.appendChild(card);
-    });
+        history.forEach((record, index) => {
+            try {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                
+                let imageHtml = '';
+                if (record.imageData) {
+                    imageHtml = `<div style="margin-top: 10px;"><img src="${record.imageData}" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid var(--border-color);"></div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="history-card-header">
+                        <div class="history-card-group">
+                            <div class="history-card-group-name">📊 ${record.groupName}</div>
+                            <div class="history-card-tree">🌳 ${record.treeName}</div>
+                        </div>
+                        <button class="history-delete-btn" onclick="deleteHistoryRecord(${record.id})" title="Hapus">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="history-card-body">
+                        <div class="history-item">
+                            <span class="history-item-label">Lingkar:</span>
+                            <span class="history-item-value">${record.lingkar} cm</span>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-item-label">Diameter:</span>
+                            <span class="history-item-value">${record.diameter} cm</span>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-item-label">Jumlah:</span>
+                            <span class="history-item-value">${record.quantity} pohon</span>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-item-label">CO₂/pohon:</span>
+                            <span class="history-item-value">${record.co2PerTree} kg</span>
+                        </div>
+                        ${record.latitude !== '-' && record.latitude !== null ? `<div class="history-item">
+                            <span class="history-item-label">📍 Koordinat:</span>
+                            <span class="history-item-value">${parseFloat(record.latitude).toFixed(6)}, ${parseFloat(record.longitude).toFixed(6)}</span>
+                        </div>` : ''}
+                        <div class="history-co2-total">
+                            <span class="history-co2-value">${record.totalCO2} kg</span>
+                            <span class="history-co2-label">Total CO₂/tahun</span>
+                        </div>
+                        ${imageHtml}
+                        <div class="history-timestamp">
+                            ⏰ ${record.timestamp}
+                        </div>
+                    </div>
+                `;
+
+                historyList.appendChild(card);
+            } catch(e) {
+                console.error('Error rendering record ' + index + ':', e);
+            }
+        });
+        
+        console.log('✅ renderHistory completed, rendered ' + history.length + ' records');
+    } catch(e) {
+        console.error('❌ Error in renderHistory:', e);
+    }
 }
 
 // ===== Delete History Record =====
